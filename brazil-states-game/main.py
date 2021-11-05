@@ -17,10 +17,8 @@ while len(guessed_states) < 27:
     user_guess = screen.textinput(
         f'{len(guessed_states)}/27 States Correct', "What's another state name? (without special caracters)").upper()
     if user_guess == 'EXIT':
-        missing_states = []
-        for state in all_states:
-            if state not in guessed_states:
-                missing_states.append(state)
+        missing_states = [
+            state for state in all_states if state not in guessed_states]
         new_data = pandas.DataFrame(missing_states)
         new_data.to_csv('states_to_learn.csv')
         break
