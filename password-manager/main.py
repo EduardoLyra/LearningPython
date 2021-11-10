@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from random import choice, randint, shuffle
 import pyperclip
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 # Password Generator Project
 
@@ -31,23 +32,48 @@ def save():
     website = website_input.get()
     user = user_input.get()
     password = password_input.get()
+    new_data = {website: {
+        'username': user,
+        'password': password
+    }}
 
     if len(website) == 0 or len(password) == 0 or len(user) == 0:
         messagebox.showerror(
             title='Oops', message="Please don't leave any fields empty")
     else:
-        is_ok = messagebox.askokcancel(
-            title=website, message=f"These are the details entered: \nEmail/Username: {user}\nPassword: {password}\nIs it ok to save?")
-
-        if is_ok:
-            with open('password-manager/data.txt', 'a') as file:
-                file.write(f'{website} | {user} | {password}\n')
-                website_input.delete(0, END)
-                user_input.delete(0, END)
-                password_input.delete(0, END)
-
-
+        try:
+            with open('password-manager/data.json', 'r') as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            with open('password-manager/data.json', 'w') as file:
+                json.dump(new_data, file, indent=4)
+        else:
+            data.update(new_data)
+            with open('password-manager/data.json', 'w') as file:
+                json.dump(data, file, indent=4)
+        finally:
+            website_input.delete(0, END)
+            user_input.delete(0, END)
+            password_input.delete(0, END)
     # ---------------------------- UI SETUP ------------------------------- #
+
+
+def find_password():
+    website = website_input.get()
+    try:
+        with open('password-manager/data.json', 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        messagebox.showerror(title='ERRO', message='No data file found')
+    else:
+        if website in data:
+            messagebox.showinfo(
+                title=website, message=f"User: {data[website]['username']}\nPassword: {data[website]['password']}")
+        else:
+            messagebox.showerror(title='ERRO',
+                                 message=f'No details for the {website} exists')
+
+
 window = Tk()
 window.title('Password Manager')
 window.config(padx=50, pady=50)
@@ -68,8 +94,8 @@ password_label = Label(text='Password: ')
 password_label.grid(column=0, row=3)
 
 # Inputs
-website_input = Entry(width=35)
-website_input.grid(column=1, row=1, columnspan=2, sticky="EW")
+website_input = Entry(width=21)
+website_input.grid(column=1, row=1, sticky="EW")
 website_input.focus()
 
 user_input = Entry(width=35)
@@ -81,6 +107,9 @@ password_input.grid(column=1, row=3, sticky="EW")
 password_input.focus()
 
 # Buttons
+search_button = Button(text='Search', command=find_password)
+search_button.grid(column=2, row=1, sticky='EW')
+
 generate_button = Button(text='Generate Password', command=generate_password)
 generate_button.grid(column=2, row=3, sticky="EW")
 
